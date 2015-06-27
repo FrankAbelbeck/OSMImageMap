@@ -22,7 +22,7 @@ General information
 --------------------------------------------------------------------------------
 
 Author:  Frank Abelbeck
-Version: 2015-06-26
+Version: 2015-06-27
 Licence: GNU General Public License version 3
 
 --------------------------------------------------------------------------------
@@ -37,7 +37,34 @@ Which programs and libraries are needed?
  * LibreOffice (table osmLatLon.ods)
 
 --------------------------------------------------------------------------------
+Files
+--------------------------------------------------------------------------------
+README          this file
+COPYING         licence information (GPL3)
+OSMTools.py     small library for lat/lon <-> tile number conversion
+createMap.py    map rendering program; generates a map from tiles
+osmLatLon.ods   LibreOffice Calc sheet for calculation of parallels/meridians
+
+--------------------------------------------------------------------------------
+Calculation of Parallels and Meridians
+--------------------------------------------------------------------------------
+This project features a LibreOffice Calc sheet for lat/lon calculation.
+
+createMap.py only generates a blank map picture. Parallels and meridians have to
+be added afterwards, manually. I use Inkscape for finalisation of my maps, and
+so I needed some x/y tile coordinates (e.g. 66.57° arctic circle) normalised to
+the map's paper dimensions.
+
+This is what the sheet does: it accepts map data (tile numbers of upper left and
+lower right corner, a zoom factor and the final map dimensions in millimetres)
+and can calculate the offset (in Inkscape's coordinate system) of meridians
+(i.e. x coordinate) and parallels (i.e. y coordinate) in such a map image.
+
+Some special parallels (both tropics and polar circles, equator) and the prime
+meridian are already defined, more can be added by the user.
+                
+--------------------------------------------------------------------------------
 Changelog
 --------------------------------------------------------------------------------
 
-2015-06-26: initial release as "works for me" version
+2015-06-27: initial release as "works for me" version

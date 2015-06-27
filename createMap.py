@@ -18,6 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+# My sources of inspiration:
+#  - https://github.com/sjev/mapCreator
+#  - https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+
 import sys,os,argparse,time
 import OSMTools
 import urllib.request,urllib.parse
