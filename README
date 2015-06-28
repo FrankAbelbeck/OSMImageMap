@@ -44,6 +44,7 @@ COPYING         licence information (GPL3)
 OSMTools.py     small library for lat/lon <-> tile number conversion
 createMap.py    map rendering program; generates a map from tiles
 osmLatLon.ods   LibreOffice Calc sheet for calculation of parallels/meridians
+addGrid.py      insert guides for meridians/parallels into a Inkscape SVG file
 
 --------------------------------------------------------------------------------
 Calculation of Parallels and Meridians
@@ -62,9 +63,52 @@ and can calculate the offset (in Inkscape's coordinate system) of meridians
 
 Some special parallels (both tropics and polar circles, equator) and the prime
 meridian are already defined, more can be added by the user.
-                
+
+As of 2015-06-28, the python program "addGrid.py" helps by adding guide lines
+for meridians and parallels in a Inkscape SVG file.
+
+Possible workflow:
+ (1) create map image with createMap.py
+ (2) create a new SVG in Inkscape, import map image, save file
+ (3) add guide lines with addGrid.py to SVG file
+ (4) finalise map layout in Inkscape
+
+--------------------------------------------------------------------------------
+Basic Usage - createMap.py
+--------------------------------------------------------------------------------
+
+./createMap.py ZOOM WEST NORTH EAST SOUTH FILE
+
+ZOOM  - zoom factor (0..18)
+WEST  - western boundary of the map (longitude, degrees)
+NORTH - northern boundary of the map (latitude, degrees)
+EAST  - eastern boundary of the map (longitude, degrees)
+SOUTH - southern boundary of the map (latitude, degrees)
+FILE  - name of the map image file
+
+For more information, refer to ./createMap.py -h
+
+--------------------------------------------------------------------------------
+Basic Usage - addGrid.py
+--------------------------------------------------------------------------------
+
+./addGrid.py ZOOM X0 Y0 NX NY FILE
+
+ZOOM - zoom factor (0..18)
+X0   - x coordinate of top left tile (integer)
+Y0   - y coordinate of top left tile (integer)
+NX   - number of tiles in horizontal direction (integer)
+NY   - number of tiles in vertical direction (integer)
+FILE - name of the Inkscape SVG file to edit
+
+Values for X0, Y0, NX and NY are are provided by createMap.py in its summary.
+
+For more information, refer to ./addGrid.py -h
+
 --------------------------------------------------------------------------------
 Changelog
 --------------------------------------------------------------------------------
 
 2015-06-27: initial release as "works for me" version
+
+2015-06-28: minor fixes; new addGrid.py script; createMap now prints a summary

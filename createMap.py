@@ -28,6 +28,20 @@ import urllib.request,urllib.parse
 import PIL.Image
 
 
+def scaleBytes(n):
+	if n > 1649267441664:
+		num,unit = n / 2**40,"TiB"
+	elif n > 1610612736:
+		num,unit = n / 2**30,"GiB"
+	elif n > 1572864:
+		num,unit = n / 2**20,"MiB"
+	elif n > 1536:
+		num,unit = n / 2**10,"kiB"
+	else:
+		num,unit = n,"B"
+	return "{:.2f}".format(num).rstrip("0").rstrip("."),unit
+
+
 if __name__ == "__main__":
 	
 	# obtain basic program path information
@@ -39,11 +53,13 @@ if __name__ == "__main__":
 	# setup argument parser and parse commandline arguments
 	parser = argparse.ArgumentParser(
 		description="Create a raster map from OpenStreetMap tiles.",
-		epilog="SOURCE may Instead of a tile server URL, the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org) or 'sat' (maquest aerial) are accepted."
+		epilog="Note: Instead of a tile server URL scheme like 'http://hostname.tld/{0}/{1}/{2}.png', the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org) or 'sat' (maquest aerial) are accepted."
 	)
-	parser.add_argument("--source",default="osm",help="URL of a tile server (akin 'http://name.tld/{0}/{1}/{2}.png'); alternatively, bookmark keywords 'osm' (openstreetmap.de; default), 'topo' (opentopomap.org) or 'sat' (maquest aerial) may be used.")
+	parser.add_argument("--source",default="osm",help="URL scheme of a tile server; cf. note below")
 	parser.add_argument("--cache",default=cachedefault,help="directory of the tile cache; default: "+cachedefault)
 	parser.add_argument("--delay",type=float,help="time in seconds between downloads")
+	parser.add_argument("--quality",default=90,type=int,help="JPEG quality factor (integer, 0..95, default={0})".format(90))
+	parser.add_argument("--compression",default=9,type=int,help="PNG compression level (integer, 0..9, default={0})".format(9))
 	parser.add_argument("ZOOM",type=int,help="zoom factor (0..18)")
 	parser.add_argument("WEST",type=float,help="western boundary of the map (longitude in degrees)")
 	parser.add_argument("NORTH",type=float,help="northern boundary of the map (latitude in degrees)")
@@ -76,20 +92,19 @@ if __name__ == "__main__":
 		sys.exit(1)
 	
 	# check zoom factor
-	zoom = args.ZOOM
-	if zoom < 0 or zoom > 18:
+	if args.ZOOM < 0 or args.ZOOM > 18:
 		print("Invalid zoom factor!")
 		sys.exit(1)
 	
 	# upper left corner of map
-	x0 = int(OSMTools.lon_to_x(args.WEST,zoom))
-	y0 = int(OSMTools.lat_to_y(args.NORTH,zoom))
+	x0 = int(OSMTools.lon_to_x(args.WEST,args.ZOOM))
+	y0 = int(OSMTools.lat_to_y(args.NORTH,args.ZOOM))
 	
-	# lower right corner of map
-	x1 = int(OSMTools.lon_to_x(args.EAST,zoom))
-	y1 = int(OSMTools.lat_to_y(args.SOUTH,zoom))
+	# lower right corner of map (i.e. lower right tile +1)
+	x1 = int(OSMTools.lon_to_x(args.EAST,args.ZOOM))
+	y1 = int(OSMTools.lat_to_y(args.SOUTH,args.ZOOM))
 	
-	tiles = [(zoom,x,y) for x in range(x0,x1) for y in range(y0,y1)]
+	tiles = [(args.ZOOM,x,y) for x in range(x0,x1) for y in range(y0,y1)]
 	n     = len(tiles)
 	
 	# calculate image dimensions based on the standard 256x256 tile
@@ -100,18 +115,20 @@ if __name__ == "__main__":
 	img = PIL.Image.new("RGB",(w,h))
 	
 	# iterate over tiles
-	for i,tile in enumerate(tiles):
+	downloadfiles = 0
+	downloadbytes = 0
+	for i,(zoom,x,y) in enumerate(tiles):
 		
 		# parse tile URL
-		url = source.format(*tile)
+		url = source.format(zoom,x,y)
 		scheme,hostname,path,params,query,fragment = urllib.parse.urlparse(url)
 		pathname = os.path.join(args.cache,hostname,path[1:])
 		
 		# check if tile is already cached; download it otherwise
 		if os.path.exists(pathname):
-			print("{0}: {1}/{2} cached, skipping".format(url,i,n))
+			print("{0}: {1}/{2} cached, skipping".format(url,i+1,n))
 		else:
-			print("{0}: {1}/{2} downloading...".format(url,i,n),end="")
+			print("{0}: {1}/{2} downloading...".format(url,i+1,n),end="")
 			dirname,filename = os.path.split(pathname)
 			os.makedirs(dirname,exist_ok=True)
 			# control download rate
@@ -123,13 +140,45 @@ if __name__ == "__main__":
 			with open(pathname,"wb") as f:
 				f.write(imgbytes)
 			print(" done")
+			downloadbytes = downloadbytes + len(imgbytes)
+			downloadfiles = downloadfiles + 1
 		
 		# load tile image
 		tileimg = PIL.Image.open(pathname)
 		
 		# paste tile image to map image
-		img.paste(tileimg, (256 * (tile[1] - x0), 256 * (tile[2] - y0)))
-		
+		img.paste(tileimg, (256 * (x - x0), 256 * (y - y0)))
+	
+	# print download statistics
+	print("Downloads: {0} files, {1} {2}".format(downloadfiles,*scaleBytes(downloadbytes)))
 	
 	# save map image file
-	img.save(args.FILE)
+	# unrecongnised parameters are silently ignored, so both JPEG and PNG
+	# quality parameters are provided...
+	img.save(args.FILE,quality=args.quality,compress_level=args.compression)
+	
+	print("""----- Begin Map Image Information -----
+General
+   filename     {0}
+   zoom         {1}
+   dimensions   {2}x{3}
+
+Coordinates (longitude,latitude)
+   upper left corner    {4},{5}
+   lower right corner   {6},{7}
+
+Tiles (x,y)
+   upper left tile    {8},{9}
+   lower right tile   {10},{11}
+   number of tiles    {12}x{13}
+----- End Map Image Information -----""".format(
+		args.FILE,
+		args.ZOOM,
+		w,h,
+		OSMTools.x_to_lon(x0,args.ZOOM),OSMTools.y_to_lat(y0,args.ZOOM),
+		OSMTools.x_to_lon(x1+1,args.ZOOM),OSMTools.y_to_lat(y1+1,args.ZOOM),
+		x0,y0,
+		x1-1,y1-1,
+		x1-x0,y1-y0
+	))
+	

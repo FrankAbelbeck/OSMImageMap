@@ -66,7 +66,7 @@ Raises:
 	return math.degrees(math.atan(math.sinh(math.pi - 2*math.pi*y/2**zoom)))
 
 
-def x_to_lon(lon,zoom):
+def x_to_lon(x,zoom):
 	"""Calculates the x tile coordinate of given longitude at given zoom level.
 
 Args:
@@ -80,7 +80,7 @@ Returns:
 
 TROPIC_CANCER    =  (23 + 26/60 + 14.2/3600) # status 2015-06-23, see https://en.wikipedia.org/wiki/Tropic_of_Cancer
 TROPIC_CAPRICORN = -(23 + 26/60 + 14.2/3600) # status 2015-06-24, see https://en.wikipedia.org/wiki/Tropic_of_Capricorn
-ARTIC_CIRCLE     =  (66 + 33/60 + 45.8/3600) # status 2015-06-24, see https://en.wikipedia.org/wiki/Arctic_Circle
+ARCTIC_CIRCLE    =  (66 + 33/60 + 45.8/3600) # status 2015-06-24, see https://en.wikipedia.org/wiki/Arctic_Circle
 ANTARCTIC_CIRCLE = -(66 + 33/60 + 45.8/3600) # status 2015-06-24, see https://en.wikipedia.org/wiki/Antarctic_Circle
 EQUATOR          = 0
 PRIME_MERIDIAN   = 0
