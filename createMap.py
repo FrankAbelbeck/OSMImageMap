@@ -29,13 +29,13 @@ import PIL.Image
 
 
 def scaleBytes(n):
-	if n > 1649267441664:
+	if n > 2**40: #1649267441664:
 		num,unit = n / 2**40,"TiB"
-	elif n > 1610612736:
+	elif n > 2**30: #1610612736:
 		num,unit = n / 2**30,"GiB"
-	elif n > 1572864:
+	elif n > 2**20: #1572864:
 		num,unit = n / 2**20,"MiB"
-	elif n > 1536:
+	elif n > 2**10: #1536:
 		num,unit = n / 2**10,"kiB"
 	else:
 		num,unit = n,"B"
@@ -100,9 +100,10 @@ if __name__ == "__main__":
 	x0 = int(OSMTools.lon_to_x(args.WEST,args.ZOOM))
 	y0 = int(OSMTools.lat_to_y(args.NORTH,args.ZOOM))
 	
-	# lower right corner of map (i.e. lower right tile +1)
-	x1 = int(OSMTools.lon_to_x(args.EAST,args.ZOOM))
-	y1 = int(OSMTools.lat_to_y(args.SOUTH,args.ZOOM))
+	# lower right corner of map
+	# (i.e. lower right tile next to the one which contains EAST/SOUTH -> +1)
+	x1 = int(OSMTools.lon_to_x(args.EAST, args.ZOOM))+1
+	y1 = int(OSMTools.lat_to_y(args.SOUTH,args.ZOOM))+1
 	
 	tiles = [(args.ZOOM,x,y) for x in range(x0,x1) for y in range(y0,y1)]
 	n     = len(tiles)
@@ -115,8 +116,8 @@ if __name__ == "__main__":
 	img = PIL.Image.new("RGB",(w,h))
 	
 	# iterate over tiles
-	downloadfiles = 0
-	downloadbytes = 0
+	dfiles = 0
+	dbytes = 0
 	for i,(zoom,x,y) in enumerate(tiles):
 		
 		# parse tile URL
@@ -136,12 +137,12 @@ if __name__ == "__main__":
 				time.sleep(float(args.delay))
 			except:
 				pass # no valid delay specified: ignore
-			imgbytes = urllib.request.urlopen(url,timeout=5).read()
+			imgbytes = urllib.request.urlopen(url).read()
 			with open(pathname,"wb") as f:
 				f.write(imgbytes)
 			print(" done")
-			downloadbytes = downloadbytes + len(imgbytes)
-			downloadfiles = downloadfiles + 1
+			dbytes = dbytes + len(imgbytes)
+			dfiles = dfiles + 1
 		
 		# load tile image
 		tileimg = PIL.Image.open(pathname)
@@ -150,7 +151,7 @@ if __name__ == "__main__":
 		img.paste(tileimg, (256 * (x - x0), 256 * (y - y0)))
 	
 	# print download statistics
-	print("Downloads: {0} files, {1} {2}".format(downloadfiles,*scaleBytes(downloadbytes)))
+	print("Downloads: {0} files, {1} {2}".format(dfiles,*scaleBytes(dbytes)))
 	
 	# save map image file
 	# unrecongnised parameters are silently ignored, so both JPEG and PNG
@@ -176,7 +177,7 @@ Tiles (x,y)
 		args.ZOOM,
 		w,h,
 		OSMTools.x_to_lon(x0,args.ZOOM),OSMTools.y_to_lat(y0,args.ZOOM),
-		OSMTools.x_to_lon(x1+1,args.ZOOM),OSMTools.y_to_lat(y1+1,args.ZOOM),
+		OSMTools.x_to_lon(x1,args.ZOOM),OSMTools.y_to_lat(y1,args.ZOOM),
 		x0,y0,
 		x1-1,y1-1,
 		x1-x0,y1-y0
