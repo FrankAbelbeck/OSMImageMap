@@ -53,7 +53,7 @@ if __name__ == "__main__":
 	# setup argument parser and parse commandline arguments
 	parser = argparse.ArgumentParser(
 		description="Create a raster map from OpenStreetMap tiles.",
-		epilog="Note: Instead of a tile server URL scheme like 'http://hostname.tld/{0}/{1}/{2}.png', the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org) or 'sat' (maquest aerial) are accepted."
+		epilog="Note: Instead of a tile server URL scheme like 'http://hostname.tld/{zoom}/{x}/{y}.png', the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org) or 'sat' (maquest aerial) are accepted."
 	)
 	parser.add_argument("--source",default="osm",help="URL scheme of a tile server; cf. note below")
 	parser.add_argument("--cache",default=cachedefault,help="directory of the tile cache; default: "+cachedefault)
@@ -73,11 +73,11 @@ if __name__ == "__main__":
 	
 	# check tile server url ("source")
 	if args.source == "osm":
-		source = "http://tile.openstreetmap.de/tiles/osmde/{0}/{1}/{2}.png"
+		source = "http://tile.openstreetmap.de/tiles/osmde/{zoom}/{x}/{y}.png"
 	elif args.source == "topo":
-		source = "http://opentopomap.org/{0}/{1}/{2}.png"
+		source = "http://opentopomap.org/{zoom}/{x}/{y}.png"
 	elif args.source == "sat":
-		source = "http://otile1.mqcdn.com/tiles/1.0.0/sat/{0}/{1}/{2}.jpg"
+		source = "http://otile1.mqcdn.com/tiles/1.0.0/sat/{zoom}/{x}/{y}.jpg"
 	else:
 		source = args.source
 		try:
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 	for i,(zoom,x,y) in enumerate(tiles):
 		
 		# parse tile URL
-		url = source.format(zoom,x,y)
+		url = source.format(zoom=zoom,x=x,y=y)
 		scheme,hostname,path,params,query,fragment = urllib.parse.urlparse(url)
 		pathname = os.path.join(args.cache,hostname,path[1:])
 		
