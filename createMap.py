@@ -15,7 +15,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
 
 # My sources of inspiration:
@@ -60,6 +59,7 @@ if __name__ == "__main__":
 	parser.add_argument("--delay",type=float,help="time in seconds between downloads")
 	parser.add_argument("--quality",default=90,type=int,help="JPEG quality factor (integer, 0..95, default={0})".format(90))
 	parser.add_argument("--compression",default=9,type=int,help="PNG compression level (integer, 0..9, default={0})".format(9))
+	parser.add_argument("--infofile",help="write map information text to file INFOFILE")
 	parser.add_argument("ZOOM",type=int,help="zoom factor (0..18)")
 	parser.add_argument("WEST",type=float,help="western boundary of the map (longitude in degrees)")
 	parser.add_argument("NORTH",type=float,help="northern boundary of the map (latitude in degrees)")
@@ -78,6 +78,8 @@ if __name__ == "__main__":
 		source = "http://opentopomap.org/{zoom}/{x}/{y}.png"
 	elif args.source == "sat":
 		source = "http://otile1.mqcdn.com/tiles/1.0.0/sat/{zoom}/{x}/{y}.jpg"
+	elif args.source == "cycle":
+		source = "http://a.tile2.opencyclemap.org/transport/{zoom}/{x}/{y}.png"
 	else:
 		source = args.source
 		try:
@@ -127,38 +129,57 @@ if __name__ == "__main__":
 		
 		# check if tile is already cached; download it otherwise
 		if os.path.exists(pathname):
-			print("{0}: {1}/{2} cached, skipping".format(url,i+1,n))
+			print("{0}: {1}/{2} cached, skipping.".format(url,i+1,n))
 		else:
 			print("{0}: {1}/{2} downloading...".format(url,i+1,n),end="")
 			dirname,filename = os.path.split(pathname)
 			os.makedirs(dirname,exist_ok=True)
 			# control download rate
+			time.sleep(args.delay)
+			
 			try:
-				time.sleep(float(args.delay))
-			except:
-				pass # no valid delay specified: ignore
-			imgbytes = urllib.request.urlopen(url).read()
-			with open(pathname,"wb") as f:
-				f.write(imgbytes)
-			print(" done")
-			dbytes = dbytes + len(imgbytes)
-			dfiles = dfiles + 1
+				imgbytes = urllib.request.urlopen(url).read()
+				if len(imgbytes) == 0:
+					raise TypeError
+				
+				with open(pathname,"wb") as f:
+					f.write(imgbytes)
+				print(" done ({0} {1})".format(*scaleBytes(len(imgbytes))))
+				dbytes = dbytes + len(imgbytes)
+				dfiles = dfiles + 1
+			except (URLError,TypeError):
+				# URLError: request failed
+				# AttributeError: most likely urlopen returned None
+				# TypeError: imgbytes was None or zero bytes downloaded
+				# in any case: download failed
+				print(" failed")
 		
 		# load tile image
 		tileimg = PIL.Image.open(pathname)
-		
 		# paste tile image to map image
 		img.paste(tileimg, (256 * (x - x0), 256 * (y - y0)))
 	
+	# end of tile stitching
+	
 	# print download statistics
-	print("Downloads: {0} files, {1} {2}".format(dfiles,*scaleBytes(dbytes)))
+	if dfiles == 0:
+		print("No files were downloaded.")
+	else:
+		if dfiles == 1:
+			dfilestr = "One file"
+		else:
+			dfilestr = "{0} files".format(dfiles)
+		print("Downloads: {0}, {1} {2}".format(dfilestr,*scaleBytes(dbytes)))
 	
 	# save map image file
 	# unrecongnised parameters are silently ignored, so both JPEG and PNG
 	# quality parameters are provided...
 	img.save(args.FILE,quality=args.quality,compress_level=args.compression)
 	
-	print("""----- Begin Map Image Information -----
+	mapinfo = """----- Begin Map Image Information -----
+createMap Command Parameters:
+   {14}
+
 General
    filename     {0}
    zoom         {1}
@@ -172,7 +193,11 @@ Tiles (x,y)
    upper left tile    {8},{9}
    lower right tile   {10},{11}
    number of tiles    {12}x{13}
------ End Map Image Information -----""".format(
+
+addGrid Parameters
+   {1} {8} {9} {12} {13}
+----- End Map Image Information -----
+""".format(
 		args.FILE,
 		args.ZOOM,
 		w,h,
@@ -180,6 +205,13 @@ Tiles (x,y)
 		OSMTools.x_to_lon(x1,args.ZOOM),OSMTools.y_to_lat(y1,args.ZOOM),
 		x0,y0,
 		x1-1,y1-1,
-		x1-x0,y1-y0
-	))
+		x1-x0,y1-y0,
+		" ".join(sys.argv[1:])
+	)
+	
+	print(mapinfo)
+	if args.infofile != None:
+		# user requested info should be written to file
+		with open(args.infofile,"w") as f:
+			f.write(mapinfo)
 	

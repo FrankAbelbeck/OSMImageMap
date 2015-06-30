@@ -1,4 +1,21 @@
 #!/usr/bin/env python
+"""
+addGrid.py: insert guide lines into an Inkscape SVG file containing a map image
+Copyright (C) 2015 Frank Abelbeck <frank.abelbeck@googlemail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 import sys,os,argparse,math
 import xml.dom.minidom
@@ -12,7 +29,7 @@ if __name__ == "__main__":
 
 	# setup argument parser and parse commandline arguments
 	parser = argparse.ArgumentParser(
-		description="Insert grid lines for parallels/meridians into a blank SVG containing a map image."
+		description="Insert guide lines for parallels/meridians into an Inkscap SVG file containing a map image."
 	)
 	parser.add_argument("--steps",default=1,type=float,help="number of steps between integer meridians/parallels [float]")
 	parser.add_argument("--special",action='store_true',help="add visible topics and polar circles (special parallels)")
@@ -24,27 +41,40 @@ if __name__ == "__main__":
 	parser.add_argument("FILE",help="name of the SVG file")
 	args = parser.parse_args()
 	
+	# check zoom factor
+	if args.ZOOM < 0 or args.ZOOM > 18:
+		print("Invalid zoom factor!")
+		sys.exit(1)
+	
 	# parse SVG XML document
-	svg = xml.dom.minidom.parse(args.FILE)
+	try:
+		svg = xml.dom.minidom.parse(args.FILE)
+	except:
+		print("Invalid SVG file!")
+		sys.exit(1)
 	
-	h_doc = float(svg.getElementsByTagName("svg")[0].getAttribute("height"))
-	
-	# extract SVG XML elements:
-	#   named view -- contains grid line definitions, first in list
-	#   image      -- get first image and assume it is the map
-	namedview = svg.getElementsByTagName("sodipodi:namedview")[0]
-	image     = svg.getElementsByTagName("image")[0]
-
-	# extract image data with respect to different coordinate systems
-	#
-	# SVG coordinate system: upper left corner, right/down
-	#
-	# guides are an Inkscape extension and follow Inkscape's coordinate system:
-	# lower left corner, right/up
-	x         = float(image.getAttribute("x"))
-	y         = float(image.getAttribute("y"))
-	width     = float(image.getAttribute("width"))
-	height    = float(image.getAttribute("height"))
+	try:
+		# extract SVG XML elements:
+		#   height     -- document height (used for coordinate transformation)
+		#   named view -- contains grid line definitions, first in list
+		#   image      -- get first image and assume it is the map
+		h_doc = float(svg.getElementsByTagName("svg")[0].getAttribute("height"))
+		namedview = svg.getElementsByTagName("sodipodi:namedview")[0]
+		image     = svg.getElementsByTagName("image")[0]
+		
+		# extract image data with respect to different coordinate systems
+		#
+		# SVG coordinate system: upper left corner, right/down
+		#
+		# guides are an Inkscape extension and follow Inkscape's coordinate system:
+		# lower left corner, right/up
+		x         = float(image.getAttribute("x"))
+		y         = float(image.getAttribute("y"))
+		width     = float(image.getAttribute("width"))
+		height    = float(image.getAttribute("height"))
+	except (IndexError,AttributeError,TypeError):
+		print("Could not retrieve important XML elements! Invalid Inkscape SVG file?")
+		sys.exit(1)
 	
 	print("potential map image at x={0} y={1} w={2} h={3}".format(x,y,width,height))
 	
@@ -98,6 +128,8 @@ if __name__ == "__main__":
 	for guide in namedview.getElementsByTagName("sodipodi:guide"):
 		existing_guides.append(guide.getAttribute("id"))
 	
+	n_guides = 0
+	
 	# iterate over meridians list...
 	for lon in meridians:
 		# calculate position and id
@@ -113,9 +145,10 @@ if __name__ == "__main__":
 			guide.setAttribute("orientation","1,0")
 			guide.setAttribute("position","{0},{1}".format(guide_pos,0))
 			namedview.appendChild(guide)
-			print("added guide for meridian={0}° at x={1}".format(lon,guide_pos))
+			print("Added guide for meridian={0}° at x={1}.".format(lon,guide_pos))
+			n_guides = n_guides + 1
 		else:
-			print("skipping already existing guide for meridian={0}°".format(lon))
+			print("Skipping already existing guide for meridian={0}°.".format(lon))
 	
 	# iterate over parallels list...
 	for lat in parallels:
@@ -133,9 +166,17 @@ if __name__ == "__main__":
 			guide.setAttribute("orientation","0,1")
 			guide.setAttribute("position","{0},{1}".format(0,guide_pos))
 			namedview.appendChild(guide)
-			print("added guide for parallel={0}° at y={1}".format(lat,guide_pos))
+			print("Added guide for parallel={0}° at y={1}.".format(lat,guide_pos))
+			n_guides = n_guides + 1
 		else:
-			print("skipping already existing guide for parallel={0}°".format(lat))
+			print("Skipping already existing guide for parallel={0}°.".format(lat))
 	
 	# write back XML
 	with open(args.FILE,"w") as f: svg.writexml(f)
+	
+	if n_guides == 0:
+		print("No guides for meridians/parallels inserted.")
+	elif n_guides == 1:
+		print("One guide inserted.")
+	else:
+		print("{0} guides inserted.".format(n_guides))

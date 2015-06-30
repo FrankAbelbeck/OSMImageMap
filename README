@@ -112,3 +112,7 @@ Changelog
 2015-06-27: initial release as "works for me" version
 
 2015-06-28: minor fixes; new addGrid.py script; createMap now prints a summary
+
+2015-06-30: created delGrid.py for automatic guide line removal,
+            createMap.py now can output map info into a text file,
+            minor fixes and improvements

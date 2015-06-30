@@ -151,3 +151,14 @@ Returns:
 	a float with the x tile coordinate"""
 	return lat_to_y(PRIME_MERIDIAN,zoom)
 
+
+def resolution(zoom,lat=0):
+	"""Calculates the resolution of a raster map in m/px at given zoom and latitude.
+
+Args:
+	zoom - zoom level (integer, 0..18)
+	lat  - latitude given in degrees (float; <0 south of equator)
+
+Returns:
+	a float"""
+	return 40075.016686 * 1000 * math.cos(math.radians(lat)) / (2**(zoom+8))
