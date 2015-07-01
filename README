@@ -22,7 +22,7 @@ General information
 --------------------------------------------------------------------------------
 
 Author:  Frank Abelbeck
-Version: 2015-06-27
+Version: 2015-07-01
 Licence: GNU General Public License version 3
 
 --------------------------------------------------------------------------------
@@ -44,7 +44,8 @@ COPYING         licence information (GPL3)
 OSMTools.py     small library for lat/lon <-> tile number conversion
 createMap.py    map rendering program; generates a map from tiles
 osmLatLon.ods   LibreOffice Calc sheet for calculation of parallels/meridians
-addGrid.py      insert guides for meridians/parallels into a Inkscape SVG file
+addGrid.py      insert guides for meridians/parallels into an Inkscape SVG file
+delGrid.py      remove guides for meridians/parallels from an Inkscape SVG file
 
 --------------------------------------------------------------------------------
 Calculation of Parallels and Meridians
@@ -116,3 +117,5 @@ Changelog
 2015-06-30: created delGrid.py for automatic guide line removal,
             createMap.py now can output map info into a text file,
             minor fixes and improvements
+
+2015-07-01: even more map info output (createMap.py)

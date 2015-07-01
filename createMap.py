@@ -52,7 +52,7 @@ if __name__ == "__main__":
 	# setup argument parser and parse commandline arguments
 	parser = argparse.ArgumentParser(
 		description="Create a raster map from OpenStreetMap tiles.",
-		epilog="Note: Instead of a tile server URL scheme like 'http://hostname.tld/{zoom}/{x}/{y}.png', the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org) or 'sat' (maquest aerial) are accepted."
+		epilog="Note: Instead of a tile server URL scheme like 'http://hostname.tld/{zoom}/{x}/{y}.png', the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org), 'sat' (maquest aerial) or 'cycle' (opencyclemap.org) are accepted."
 	)
 	parser.add_argument("--source",default="osm",help="URL scheme of a tile server; cf. note below")
 	parser.add_argument("--cache",default=cachedefault,help="directory of the tile cache; default: "+cachedefault)
@@ -176,6 +176,17 @@ if __name__ == "__main__":
 	# quality parameters are provided...
 	img.save(args.FILE,quality=args.quality,compress_level=args.compression)
 	
+	# calculate resolution
+	resolution = "   latitude     resolution\n"
+	latstep = (args.NORTH - args.SOUTH) / 5
+	for i in range(0,5):
+		lat = args.SOUTH + i * latstep
+		res = OSMTools.resolution(args.ZOOM,lat)
+		unit = 1
+		while unit/res < 1: unit = unit * 10
+		resolution = resolution + "   {0:8.5f}°    {1:.5f} m/px   {2:.5f} px/{3}m\n".format(lat,res,unit/res,unit)
+	
+	# prepare map information output
 	mapinfo = """----- Begin Map Image Information -----
 createMap Command Parameters:
    {14}
@@ -185,7 +196,7 @@ General
    zoom         {1}
    dimensions   {2}x{3}
 
-Coordinates (longitude,latitude)
+Coordinates (Longitude,Latitude)
    upper left corner    {4},{5}
    lower right corner   {6},{7}
 
@@ -193,6 +204,9 @@ Tiles (x,y)
    upper left tile    {8},{9}
    lower right tile   {10},{11}
    number of tiles    {12}x{13}
+
+Resolution/Map Scale
+{15}
 
 addGrid Parameters
    {1} {8} {9} {12} {13}
@@ -206,7 +220,8 @@ addGrid Parameters
 		x0,y0,
 		x1-1,y1-1,
 		x1-x0,y1-y0,
-		" ".join(sys.argv[1:])
+		" ".join(sys.argv[1:]),
+		resolution
 	)
 	
 	print(mapinfo)
