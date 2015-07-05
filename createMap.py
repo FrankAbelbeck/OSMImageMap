@@ -179,7 +179,7 @@ if __name__ == "__main__":
 	# calculate resolution
 	resolution = "   latitude     resolution\n"
 	latstep = (args.NORTH - args.SOUTH) / 5
-	for i in range(0,5):
+	for i in range(0,6):
 		lat = args.SOUTH + i * latstep
 		res = OSMTools.resolution(args.ZOOM,lat)
 		unit = 1
