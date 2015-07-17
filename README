@@ -22,7 +22,7 @@ General information
 --------------------------------------------------------------------------------
 
 Author:  Frank Abelbeck
-Version: 2015-07-01
+Version: 2015-07-17
 Licence: GNU General Public License version 3
 
 --------------------------------------------------------------------------------
@@ -119,3 +119,6 @@ Changelog
             minor fixes and improvements
 
 2015-07-01: even more map info output (createMap.py)
+
+2015-07-17: new sources (OpenMapSurfer hybrid, stamen.com toner-hybrid),
+            improved download error management, small fixes

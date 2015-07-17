@@ -52,7 +52,7 @@ if __name__ == "__main__":
 	# setup argument parser and parse commandline arguments
 	parser = argparse.ArgumentParser(
 		description="Create a raster map from OpenStreetMap tiles.",
-		epilog="Note: Instead of a tile server URL scheme like 'http://hostname.tld/{zoom}/{x}/{y}.png', the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org), 'sat' (maquest aerial) or 'cycle' (opencyclemap.org) are accepted."
+		epilog="Note: Besides a tile server URL scheme like 'http://hostname.tld/{z}/{x}/{y}.png', the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org), 'sat' (maquest aerial), 'cycle' (opencyclemap.org), tonerhybrid (stamen.com) or 'hybrid' (openmapsurfer.org) are accepted, too."
 	)
 	parser.add_argument("--source",default="osm",help="URL scheme of a tile server; cf. note below")
 	parser.add_argument("--cache",default=cachedefault,help="directory of the tile cache; default: "+cachedefault)
@@ -73,17 +73,21 @@ if __name__ == "__main__":
 	
 	# check tile server url ("source")
 	if args.source == "osm":
-		source = "http://tile.openstreetmap.de/tiles/osmde/{zoom}/{x}/{y}.png"
+		source = "http://tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png"
 	elif args.source == "topo":
-		source = "http://opentopomap.org/{zoom}/{x}/{y}.png"
+		source = "http://opentopomap.org/{z}/{x}/{y}.png"
 	elif args.source == "sat":
-		source = "http://otile1.mqcdn.com/tiles/1.0.0/sat/{zoom}/{x}/{y}.jpg"
+		source = "http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.jpg"
 	elif args.source == "cycle":
-		source = "http://a.tile2.opencyclemap.org/transport/{zoom}/{x}/{y}.png"
+		source = "http://a.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png"
+	elif args.source == "tonerhybrid":
+		source = "http://a.tile.stamen.com/toner-hybrid/{z}/{x}/{y}.png"
+	elif args.source == "hybrid":
+		source = "http://korona.geog.uni-heidelberg.de/tiles/hybrid/x={x}&y={y}&z={z}"
 	else:
 		source = args.source
 		try:
-			source.format(1,2,3)
+			source.format(z=1,x=2,y=3)
 		except IndexError:
 			print("Invalid source URL provided!")
 			sys.exit(1)
@@ -115,7 +119,7 @@ if __name__ == "__main__":
 	h = (y1 - y0) * 256
 	
 	# open map image file
-	img = PIL.Image.new("RGB",(w,h))
+	img = PIL.Image.new("RGBA",(w,h))
 	
 	# iterate over tiles
 	dfiles = 0
@@ -123,7 +127,7 @@ if __name__ == "__main__":
 	for i,(zoom,x,y) in enumerate(tiles):
 		
 		# parse tile URL
-		url = source.format(zoom=zoom,x=x,y=y)
+		url = source.format(z=zoom,x=x,y=y)
 		scheme,hostname,path,params,query,fragment = urllib.parse.urlparse(url)
 		pathname = os.path.join(args.cache,hostname,path[1:])
 		
@@ -135,7 +139,10 @@ if __name__ == "__main__":
 			dirname,filename = os.path.split(pathname)
 			os.makedirs(dirname,exist_ok=True)
 			# control download rate
-			time.sleep(args.delay)
+			try:
+				time.sleep(args.delay)
+			except TypeError: # invalid delay, i.e. not specified: ignore
+				pass
 			
 			try:
 				imgbytes = urllib.request.urlopen(url).read()
@@ -147,17 +154,21 @@ if __name__ == "__main__":
 				print(" done ({0} {1})".format(*scaleBytes(len(imgbytes))))
 				dbytes = dbytes + len(imgbytes)
 				dfiles = dfiles + 1
-			except (URLError,TypeError):
-				# URLError: request failed
-				# AttributeError: most likely urlopen returned None
-				# TypeError: imgbytes was None or zero bytes downloaded
-				# in any case: download failed
-				print(" failed")
+			except urllib.error.URLError:
+				print(" request failed!")
+			except TypeError:
+				print(" no data was received!")
+			except ConnectionResetError:
+				print(" connection reset by peer!")
 		
 		# load tile image
-		tileimg = PIL.Image.open(pathname)
-		# paste tile image to map image
-		img.paste(tileimg, (256 * (x - x0), 256 * (y - y0)))
+		try:
+			tileimg = PIL.Image.open(pathname)
+			# paste tile image to map image
+			img.paste(tileimg, (256 * (x - x0), 256 * (y - y0)))
+		except FileNotFoundError:
+			print("Error: tile zoom={zoom} x={x} y={y} not found!".format(zoom=zoom,x=x,y=y))
+			sys.exit(1)
 	
 	# end of tile stitching
 	
