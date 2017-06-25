@@ -21,6 +21,8 @@ import sys,os,argparse,math
 import xml.dom.minidom
 import OSMTools
 
+DPI = 90
+
 if __name__ == "__main__":
 	
 	# obtain basic program path information
@@ -58,7 +60,22 @@ if __name__ == "__main__":
 		#   height     -- document height (used for coordinate transformation)
 		#   named view -- contains grid line definitions, first in list
 		#   image      -- get first image and assume it is the map
-		h_doc = float(svg.getElementsByTagName("svg")[0].getAttribute("height"))
+		h = svg.getElementsByTagName("svg")[0].getAttribute("height")
+		# convert units: Inkscape still assumes 90 dpi
+		if h[-2:] == "mm":
+			h_doc = float(h[0:-2]) * DPI / 25.4
+		elif h[-2:] == "cm":
+			h_doc = float(h[0:-2]) * DPI / 2.54
+		elif h[-1:] == "m":
+			h_doc = float(h[0:-1]) * DPI / 0.254
+		elif h[-2:] == "in":
+			h_doc = float(h[0:-2]) * DPI
+		elif h[-2:] == "ft":
+			h_doc = float(h[0:-2]) * DPI * 12
+		elif h[-2:] == "px":
+			h_doc = float(h[0:-2])
+		else:
+			h_doc = float(h)
 		namedview = svg.getElementsByTagName("sodipodi:namedview")[0]
 		image     = svg.getElementsByTagName("image")[0]
 		
@@ -72,8 +89,9 @@ if __name__ == "__main__":
 		y         = float(image.getAttribute("y"))
 		width     = float(image.getAttribute("width"))
 		height    = float(image.getAttribute("height"))
-	except (IndexError,AttributeError,TypeError):
+	except (IndexError,AttributeError,TypeError) as e:
 		print("Could not retrieve important XML elements! Invalid Inkscape SVG file?")
+		print(e)
 		sys.exit(1)
 	
 	print("potential map image at x={0} y={1} w={2} h={3}".format(x,y,width,height))

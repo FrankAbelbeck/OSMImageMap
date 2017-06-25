@@ -22,7 +22,7 @@ General information
 --------------------------------------------------------------------------------
 
 Author:  Frank Abelbeck
-Version: 2015-07-17
+Version: 2017-06-25
 Licence: GNU General Public License version 3
 
 --------------------------------------------------------------------------------
@@ -68,10 +68,13 @@ meridian are already defined, more can be added by the user.
 As of 2015-06-28, the python program "addGrid.py" helps by adding guide lines
 for meridians and parallels in a Inkscape SVG file.
 
+As of 2017-06-25, addGrid.py misplaces the guide lines vertically due to changes
+in the Inkscape SVG format. I don't have a solution yet.
+
 Possible workflow:
  (1) create map image with createMap.py
  (2) create a new SVG in Inkscape, import map image, save file
- (3) add guide lines with addGrid.py to SVG file
+ (3) add guide lines with addGrid.py to SVG file (2017-06-25: won't work?)
  (4) finalise map layout in Inkscape
 
 --------------------------------------------------------------------------------
@@ -122,3 +125,5 @@ Changelog
 
 2015-07-17: new sources (OpenMapSurfer hybrid, stamen.com toner-hybrid),
             improved download error management, small fixes
+
+2017-06-25: new sources (ESRI, hillshading, OpenSeaMap), tried to fix addGrid.py

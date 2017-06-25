@@ -52,7 +52,13 @@ if __name__ == "__main__":
 	# setup argument parser and parse commandline arguments
 	parser = argparse.ArgumentParser(
 		description="Create a raster map from OpenStreetMap tiles.",
-		epilog="Note: Besides a tile server URL scheme like 'http://hostname.tld/{z}/{x}/{y}.png', the keywords 'osm' (openstreetmap.de), 'topo' (opentopomap.org), 'sat' (maquest aerial), 'cycle' (opencyclemap.org), tonerhybrid (stamen.com) or 'hybrid' (openmapsurfer.org) are accepted, too."
+		epilog="""Note: Besides a tile server URL scheme like 'http://host.tld/{z}/{x}/{y}.png',
+the following keywords are also recognised: 'osm' (openstreetmap.de),
+'topo' (opentopomap.org), 'cycle' (opencyclemap.org),
+'tonerhybrid' (stamen.com), 'watercolor' (stamen.com),
+'hillshading' (wmflabs.org), 'seamark' (openseamap.org),
+'hybrid' (openmapsurfer.org), 'esri_topo' (arcgisonline.com),
+'esri_sat' (arcgisonline.com), 'esri_natgeo' (arcgisonline.com)"""
 	)
 	parser.add_argument("--source",default="osm",help="URL scheme of a tile server; cf. note below")
 	parser.add_argument("--cache",default=cachedefault,help="directory of the tile cache; default: "+cachedefault)
@@ -76,14 +82,24 @@ if __name__ == "__main__":
 		source = "http://tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png"
 	elif args.source == "topo":
 		source = "http://opentopomap.org/{z}/{x}/{y}.png"
-	elif args.source == "sat":
-		source = "http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.jpg"
 	elif args.source == "cycle":
 		source = "http://a.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png"
 	elif args.source == "tonerhybrid":
 		source = "http://a.tile.stamen.com/toner-hybrid/{z}/{x}/{y}.png"
+	elif args.source == "watercolor":
+		source = "http://c.tile.stamen.com/watercolor/{z}/{x}/{y}.png"
+	elif args.source == "hillshading":
+		source = "http://c.tiles.wmflabs.org/hillshading/{z}/{x}/{y}.png"
+	elif args.source == "seamark":
+		source = "http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
 	elif args.source == "hybrid":
 		source = "http://korona.geog.uni-heidelberg.de/tiles/hybrid/x={x}&y={y}&z={z}"
+	elif args.source == "esri_topo":
+		source = "https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}.jpg"
+	elif args.source == "esri_sat":
+		source = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg"
+	elif args.source == "esri_natgeo":
+		source = "https://services.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}.jpg"
 	else:
 		source = args.source
 		try:
