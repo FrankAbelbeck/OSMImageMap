@@ -74,6 +74,13 @@ the following keywords are also recognised: 'osm' (openstreetmap.de),
 	parser.add_argument("FILE",help="name of the output image file")
 	args = parser.parse_args()
 	
+	# check extension of given FILE name; should be either JPG or PNG
+	imgfilename = args.FILE
+	imgextension = os.path.splitext(imgfilename)[1].lower()
+	if imgextension not in (".jpg",".jpeg",".png"):
+		print("Invalid file name extension '{}'".format(imgextension))
+		sys.exit(1)
+	
 	# make sure cache directory exists
 	if not os.path.exists(args.cache): os.mkdir(args.cache)
 	
@@ -102,11 +109,6 @@ the following keywords are also recognised: 'osm' (openstreetmap.de),
 		source = "https://services.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}.jpg"
 	else:
 		source = args.source
-		try:
-			source.format(z=1,x=2,y=3)
-		except IndexError:
-			print("Invalid source URL provided!")
-			sys.exit(1)
 	
 	# check bounding box values
 	if args.EAST <= args.WEST or args.NORTH <= args.SOUTH:
@@ -145,6 +147,9 @@ the following keywords are also recognised: 'osm' (openstreetmap.de),
 		# parse tile URL
 		url = source.format(z=zoom,x=x,y=y)
 		scheme,hostname,path,params,query,fragment = urllib.parse.urlparse(url)
+		if len(hostname) == 0 or len(path) == 0 or len(scheme) == 0:
+			print("invalid source URL specified!")
+			sys.exit(1)
 		pathname = os.path.join(args.cache,hostname,path[1:])
 		
 		# check if tile is already cached; download it otherwise
@@ -170,7 +175,7 @@ the following keywords are also recognised: 'osm' (openstreetmap.de),
 				print(" done ({0} {1})".format(*scaleBytes(len(imgbytes))))
 				dbytes = dbytes + len(imgbytes)
 				dfiles = dfiles + 1
-			except urllib.error.URLError:
+			except (urllib.error.URLError,ValueError):
 				print(" request failed!")
 			except TypeError:
 				print(" no data was received!")
