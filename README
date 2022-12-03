@@ -128,4 +128,4 @@ Changelog
 
 2017-06-25: new sources (ESRI, hillshading, OpenSeaMap), tried to fix addGrid.py
 
-2022-12-03: new source (DFS)
+2022-12-03: new source (DFS); option "update" to force tile downloading
