@@ -58,7 +58,8 @@ the following keywords are also recognised: 'osm' (openstreetmap.de),
 'tonerhybrid' (stamen.com), 'watercolor' (stamen.com),
 'hillshading' (wmflabs.org), 'seamark' (openseamap.org),
 'hybrid' (openmapsurfer.org), 'esri_topo' (arcgisonline.com),
-'esri_sat' (arcgisonline.com), 'esri_natgeo' (arcgisonline.com)"""
+'esri_sat' (arcgisonline.com), 'esri_natgeo' (arcgisonline.com),
+'terrain' (stamen.com), dfs (ais.dfs.de)"""
 	)
 	parser.add_argument("--source",default="osm",help="URL scheme of a tile server; cf. note below")
 	parser.add_argument("--cache",default=cachedefault,help="directory of the tile cache; default: "+cachedefault)
@@ -66,6 +67,7 @@ the following keywords are also recognised: 'osm' (openstreetmap.de),
 	parser.add_argument("--quality",default=90,type=int,help="JPEG quality factor (integer, 0..95, default={0})".format(90))
 	parser.add_argument("--compression",default=9,type=int,help="PNG compression level (integer, 0..9, default={0})".format(9))
 	parser.add_argument("--infofile",help="write map information text to file INFOFILE")
+	parser.add_argument("--update",help="update tiles (download even if cached)",action="store_true")
 	parser.add_argument("ZOOM",type=int,help="zoom factor (0..18)")
 	parser.add_argument("WEST",type=float,help="western boundary of the map (longitude in degrees)")
 	parser.add_argument("NORTH",type=float,help="northern boundary of the map (latitude in degrees)")
@@ -107,6 +109,17 @@ the following keywords are also recognised: 'osm' (openstreetmap.de),
 		source = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.jpg"
 	elif args.source == "esri_natgeo":
 		source = "https://services.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}.jpg"
+	elif args.source == "terrain":
+		source = "https://stamen-tiles-d.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png"
+	elif args.source == "dfs":
+		source = "https://ais.dfs.de/static-maps/icao500/tiles/{z}/{x}/{y}.png"
+		print("""WARNING!
+
+Always use the official ICAO charts published by the Deutsche Flugsicherung
+as basis for aeronautical navigation!
+
+YOU HAVE BEEN WARNED!
+""")
 	else:
 		source = args.source
 	
@@ -153,7 +166,7 @@ the following keywords are also recognised: 'osm' (openstreetmap.de),
 		pathname = os.path.join(args.cache,hostname,path[1:])
 		
 		# check if tile is already cached; download it otherwise
-		if os.path.exists(pathname):
+		if not args.update and os.path.exists(pathname):
 			print("{0}: {1}/{2} cached, skipping.".format(url,i+1,n))
 		else:
 			print("{0}: {1}/{2} downloading...".format(url,i+1,n),end="")

@@ -22,7 +22,7 @@ General information
 --------------------------------------------------------------------------------
 
 Author:  Frank Abelbeck
-Version: 2017-06-25
+Version: 2022-12-03
 Licence: GNU General Public License version 3
 
 --------------------------------------------------------------------------------
@@ -127,3 +127,5 @@ Changelog
             improved download error management, small fixes
 
 2017-06-25: new sources (ESRI, hillshading, OpenSeaMap), tried to fix addGrid.py
+
+2022-12-03: new source (DFS)
